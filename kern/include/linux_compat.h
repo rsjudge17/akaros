@@ -25,6 +25,7 @@
 #include <taskqueue.h>
 #include <zlib.h>
 #include <list.h>
+#include <refd_page.h>
 #include <linux/errno.h>
 /* temporary dumping ground */
 #include "compat_todo.h"
