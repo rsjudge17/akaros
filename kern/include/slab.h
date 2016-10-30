@@ -38,15 +38,17 @@
 #define NUM_BUF_PER_SLAB 8
 #define SLAB_LARGE_CUTOFF (PGSIZE / NUM_BUF_PER_SLAB)
 
+#define KMEM_CACHE_NR_HASH_LISTS		193
+
 struct kmem_slab;
 
 /* Control block for buffers for large-object slabs */
 struct kmem_bufctl {
-	TAILQ_ENTRY(kmem_bufctl) link;
+	SLIST_ENTRY(kmem_bufctl) link;
 	void *buf_addr;
 	struct kmem_slab *my_slab;
 };
-TAILQ_HEAD(kmem_bufctl_list, kmem_bufctl);
+SLIST_HEAD(kmem_bufctl_list, kmem_bufctl);
 
 /* Slabs contain the objects.  Can be either full, partial, or empty,
  * determined by checking the number of objects busy vs total.  For large
@@ -96,6 +98,11 @@ void kmem_cache_free(struct kmem_cache *cp, void *buf);
 /* Back end: internal functions */
 void kmem_cache_init(void);
 void kmem_cache_reap(struct kmem_cache *cp);
+/* Low-level interface for initializing a cache. */
+void __kmem_cache_create(struct kmem_cache *kc, const char *name,
+                         size_t obj_size, int align, int flags,
+                         void (*ctor)(void *, size_t),
+                         void (*dtor)(void *, size_t));
 
 /* Debug */
 void print_kmem_cache(struct kmem_cache *kc);
