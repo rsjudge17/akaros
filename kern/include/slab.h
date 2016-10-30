@@ -80,6 +80,8 @@ struct kmem_cache {
 	void (*ctor)(void *, size_t);
 	void (*dtor)(void *, size_t);
 	unsigned long nr_cur_alloc;
+	struct kmem_bufctl_list *alloc_hash;
+	struct kmem_bufctl_list static_hash[KMEM_CACHE_NR_HASH_LISTS];
 };
 
 /* List of all kmem_caches, sorted in order of size */
