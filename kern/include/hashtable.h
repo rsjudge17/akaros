@@ -31,6 +31,11 @@ typedef struct hashtable {
     ssize_t (*eqfn) (void *k1, void *k2);
 } hashtable_t;
 
+struct hash_helper {
+	unsigned int				nr_hash_lists;
+	unsigned int				prime_idx;
+};
+
 static inline size_t indexFor(unsigned int tablelength, unsigned int hashvalue)
 {
 	return (hashvalue % tablelength);

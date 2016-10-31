@@ -44,8 +44,10 @@ void __kmem_cache_create(struct kmem_cache *kc, const char *name,
 	kc->ctor = ctor;
 	kc->dtor = dtor;
 	kc->nr_cur_alloc = 0;
+
 	/* TODO: if we alloc even the initial one from the base arena, we can skip
 	 * it for small object caches. */
+		// XXX do this shit now.  can even start smaller than 193
 	kc->alloc_hash = kc->static_hash;
 	for (int i = 0; i < KMEM_CACHE_NR_HASH_LISTS; i++)
 		SLIST_INIT(&kc->static_hash[i]);

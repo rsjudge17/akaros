@@ -52,6 +52,51 @@
  * - If we ever grow the hash table, we'll need to be careful of bootstrapping.
  *   Try to alloc contig pages from the base arena (special casing the base
  *   arena too).
+ *   		// XXX
+ *   		expose the logic from hashtable.c, like the prime shit, and add a
+ *   		couple helper functions as needed so we can resize
+ *   			maybe a helper struct too: tracking current prime index and
+ *   			size, nr_hash_lists (which is the prime_index)
+ *   				basically struct hash_table, but the table isn't entries
+ *   					nr_items (this is nr_alloc_segs.  we need one of them)
+ *   					load_limit (or whatever)  (to avoid recompute)
+ *   						can set this and toggle an arena bool when we check
+ *   						the hash anyways
+ *   					nr_hash_lists
+ *   					prime_idx (for finding the next size up)
+ *   					hash_tbl*
+ *   						maybe an internal one built in too!
+ *   						problem with this is the typing
+ *   							see below
+ *   							
+ *   					tbl_alloc_sz
+ *   					 	
+ *
+ *   			helper for hash_is_overloaded()
+ *   				all static inlines, from hashtable.h
+ *   			keep in mind we don't know if its an SLIST or a BSD_LIST.
+ *   				XXX should we make the arena one an SLIST too?
+ *   					tradeoff is slightly larger btags (already 64 b)
+ *   					gains easier hashing
+ *   						maybe with more done by library
+ *   						just an slist, vs both ptrs
+ *   				XXX should we ditch the SLIST for manual list ops?
+ *
+ *   		base will have trouble.  can't do it on demand.  but it can do it if
+ *   		a flag is set, perhaps on the way out of a successful alloc
+ *   			try_grow_hash or something.
+ *   				basically need the new size, alloc it somehow, move all the
+ *   				old items over (O(n) hashes)
+ *
+ *   		probably start smaller than 193
+ *
+ *   		maybe change the hash multiplier to linux's 64 bit (is 32)
+ *
+ *   		also, we'll want a base_alloc for qcaches, slab code can use it too
+ *   		for their hash table.  (find_my_base needs to be exported) XXX
+ *   				actually, not exported.  just base_alloc(size_t bytes)
+ *
+ *
  * - qcaching
  * - We'll need some linkage between sources and parent arenas, with callbacks
  *   or something when the base arena starts to run low on memory.  Once an

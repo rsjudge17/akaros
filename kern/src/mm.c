@@ -1157,14 +1157,60 @@ unsigned long populate_va(struct proc *p, uintptr_t va, unsigned long nr_pgs)
 }
 
 /* Kernel Dynamic Memory Mappings */
+
+// XXX make sure vmaps aren't Global
+//
+// for the PML(n-1) permanent mapping for KERNBASE and up, we need to make
+// sure we never unmap those pages.  say we map something in, then unmap
+// something.  currently that aggressively frees intermediate pages.  we
+// need to not free intermediate pages for PML(N-1) for addrs above
+// kernbase.  minor PITA.
+//
+// vmap_pmem() assumes KERN_RW.  either change that, or have another
+// interface for guard pages.
+//
+// build kstacks on top of it.  can optionally have a cache in there to avoid
+// contention (and respond to pressure).  but it's just to avoid vmem hassles.
+// tlb shootdowns will be batched regardless
+//
+// 		if we use vmem, kstacks might be their own arena with their own allocs
+// 				layered allocators
+
 uintptr_t dyn_vmap_llim = KERN_DYN_TOP;
 spinlock_t dyn_vmap_lock = SPINLOCK_INITIALIZER;
+
+static void gc_vmap_area(void)
+{
+	// XXX
+	// if ratio of stale to overall area > X
+	// 		remove all stale entries
+	// 		TLB shootdown
+	// 			what about shooting down us too? (deadlock, etc)
+	// 				IMMED KMSG, we'd just handle it while holding the lock
+	// 		for testing, we can do this at least once per boot
+	//
+	// 		we shift the shootdowns to alloc side, when needed.  indep of
+	// 		callers
+	// 		
+}
 
 /* Reserve space in the kernel dynamic memory map area */
 uintptr_t get_vmap_segment(unsigned long num_pages)
 {
 	uintptr_t retval;
+
 	spin_lock(&dyn_vmap_lock);
+
+	gc_vmap_area();
+
+
+// XXX this is an incremental allocator.  want solaris's allocator
+// rough plan:
+// 		allocate
+// 		don't free, mark stale.  still counts as in use.  track with counters
+// 			can i wrap this with a vmem allocator?
+//
+//
 	retval = dyn_vmap_llim - num_pages * PGSIZE;
 	if ((retval > ULIM) && (retval < KERN_DYN_TOP)) {
 		dyn_vmap_llim = retval;
@@ -1172,6 +1218,10 @@ uintptr_t get_vmap_segment(unsigned long num_pages)
 		warn("[kernel] dynamic mapping failed!");
 		retval = 0;
 	}
+
+
+
+
 	spin_unlock(&dyn_vmap_lock);
 	return retval;
 }
